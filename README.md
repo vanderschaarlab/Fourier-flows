@@ -1,4 +1,4 @@
-# Fourier-flows
+# Fourier-flows 🌀
 
 Code for the [Generative Time-series Modeling with Fourier Flows](https://openreview.net/forum?id=PpshD0AXfA) paper.
 
@@ -54,7 +54,7 @@ assert samples.shape == (10, T, dims)
 The public datasets used in the paper are available at:
 * https://drive.google.com/drive/folders/1UILaMFnZpRUf_IhOIkxK2wzBjWBTB86G
 
-### Experiments
+### Experiments 
 * For Experiment 1 (Section 5.1), run [`ICLR 2021 - Experiment 1.ipynb`](experiments/ICLR%202021%20-%20Experiment%201.ipynb).
 * For Experiment 2 (Section 5.2), run [`run_experiment_2.py`](experiments/run_experiment_2.py).
 
