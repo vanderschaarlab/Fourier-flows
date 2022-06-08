@@ -20,7 +20,7 @@ def find_version() -> str:
     return version
 
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf8") as fh:
     long_description = fh.read()
 
 with open("requirements.txt") as fp:
