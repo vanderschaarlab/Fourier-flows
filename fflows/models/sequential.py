@@ -9,24 +9,23 @@ This script contains torch implementation for a vanilla RNN
 
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 import sys
+
+import numpy as np
 
 if not sys.warnoptions:
     import warnings
 
     warnings.simplefilter("ignore")
 
+import sys
+import warnings
+
 import torch
 from torch import nn
 from torch.autograd import Variable
 
-from utils.data_padding import padd_arrays, unpadd_arrays
-
-import sys
-
-import warnings
+from fflows.utils.data_padding import padd_arrays, unpadd_arrays
 
 warnings.filterwarnings("ignore")
 
@@ -53,13 +52,17 @@ def single_losses(model):
 def model_loss(output, target, masks):
 
     single_loss = masks * (output - target) ** 2
-    loss = torch.sum(torch.sum(single_loss, axis=1) / torch.sum(torch.sum(masks, axis=1)))
+    loss = torch.sum(
+        torch.sum(single_loss, axis=1) / torch.sum(torch.sum(masks, axis=1))
+    )
 
     return loss
 
 
 class RNN(nn.Module):
-    def __init__(self, mode="RNN", INPUT_SIZE=30, OUTPUT_SIZE=1, HIDDEN_UNITS=100, NUM_LAYERS=1):
+    def __init__(
+        self, mode="RNN", INPUT_SIZE=30, OUTPUT_SIZE=1, HIDDEN_UNITS=100, NUM_LAYERS=1
+    ):
 
         super(RNN, self).__init__()
 
@@ -70,13 +73,22 @@ class RNN(nn.Module):
 
         rnn_dict = {
             "RNN": nn.RNN(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
             "LSTM": nn.LSTM(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
             "GRU": nn.GRU(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
         }
 
@@ -131,13 +143,22 @@ class RNNmodel(nn.Module):
 
         rnn_dict = {
             "RNN": nn.RNN(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
             "LSTM": nn.LSTM(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
             "GRU": nn.GRU(
-                input_size=self.INPUT_SIZE, hidden_size=self.HIDDEN_UNITS, num_layers=self.NUM_LAYERS, batch_first=True,
+                input_size=self.INPUT_SIZE,
+                hidden_size=self.HIDDEN_UNITS,
+                num_layers=self.NUM_LAYERS,
+                batch_first=True,
             ),
         }
 
@@ -154,7 +175,9 @@ class RNNmodel(nn.Module):
 
         if self.mode == "LSTM":
 
-            r_out, (h_n, h_c) = self.rnn(x, None)  # None represents zero initial hidden state
+            r_out, (h_n, h_c) = self.rnn(
+                x, None
+            )  # None represents zero initial hidden state
 
         else:
 
@@ -175,13 +198,17 @@ class RNNmodel(nn.Module):
 
         X = Variable(torch.tensor(X_padded), volatile=True).type(torch.FloatTensor)
         Y = Variable(torch.tensor(Y_padded), volatile=True).type(torch.FloatTensor)
-        loss_masks = Variable(torch.tensor(loss_masks), volatile=True).type(torch.FloatTensor)
+        loss_masks = Variable(torch.tensor(loss_masks), volatile=True).type(
+            torch.FloatTensor
+        )
 
         self.X = X
         self.y = Y
         self.masks = loss_masks
 
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.LR)  # optimize all rnn parameters
+        optimizer = torch.optim.Adam(
+            self.parameters(), lr=self.LR
+        )  # optimize all rnn parameters
         self.loss_fn = model_loss  # nn.MSELoss()
 
         # training and testing
@@ -189,7 +216,9 @@ class RNNmodel(nn.Module):
 
             for step in range(self.N_STEPS):
 
-                batch_indexes = np.random.choice(list(range(X.shape[0])), size=self.BATCH_SIZE, replace=True, p=None)
+                batch_indexes = np.random.choice(
+                    list(range(X.shape[0])), size=self.BATCH_SIZE, replace=True, p=None
+                )
 
                 x = torch.tensor(X[batch_indexes, :, :])
                 y = torch.tensor(Y[batch_indexes])
@@ -206,12 +235,14 @@ class RNNmodel(nn.Module):
                 self.loss = self.loss_fn(output, b_y, b_m)  # MSE loss
 
                 optimizer.zero_grad()  # clear gradients for this training step
-                self.loss.backward(retain_graph=True)  # backpropagation, compute gradients
+                self.loss.backward(
+                    retain_graph=True
+                )  # backpropagation, compute gradients
                 optimizer.step()  # apply gradients
 
                 if (step % 50 == 0) and verbosity:
 
-                    print("Epoch: ", epoch, "| train loss: %.4f" % self.loss.data)
+                    print("Epoch: ", epoch, f"| train loss: {self.loss.data:.4f}")
 
     def predict(self, X, padd=False, numpy_output=False):
 

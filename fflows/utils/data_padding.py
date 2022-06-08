@@ -3,9 +3,9 @@
 
 from __future__ import absolute_import, division, print_function
 
+import sys
 
 import numpy as np
-import sys
 
 if not sys.warnoptions:
     import warnings
@@ -42,12 +42,20 @@ def padd_arrays(X, max_length=None):
         max_length = np.max(np.array([len(X[k]) for k in range(len(X))]))
 
     X_output = [
-        np.expand_dims(np.vstack((X[k], np.zeros((max_length - X[k].shape[0], X[0].shape[1])))), axis=0)
+        np.expand_dims(
+            np.vstack((X[k], np.zeros((max_length - X[k].shape[0], X[0].shape[1])))),
+            axis=0,
+        )
         for k in range(len(X))
     ]
     _mask = [
         np.expand_dims(
-            np.vstack((np.ones((X[k].shape[0], X[k].shape[1])), np.zeros((max_length - X[k].shape[0], X[0].shape[1])))),
+            np.vstack(
+                (
+                    np.ones((X[k].shape[0], X[k].shape[1])),
+                    np.zeros((max_length - X[k].shape[0], X[0].shape[1])),
+                )
+            ),
             axis=0,
         )
         for k in range(len(X))

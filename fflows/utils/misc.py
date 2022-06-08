@@ -1,7 +1,7 @@
 """Time-series Generative Adversarial Networks (TimeGAN) Codebase.
 
-Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
-"Time-series Generative Adversarial Networks," 
+Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar,
+"Time-series Generative Adversarial Networks,"
 Neural Information Processing Systems (NeurIPS), 2019.
 
 Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
@@ -27,7 +27,7 @@ import tensorflow as tf
 
 def train_test_divide(data_x, data_x_hat, data_t, data_t_hat, train_rate=0.8):
     """Divide train and test data for both original and synthetic data.
-    
+
     Args:
         - data_x: original data
         - data_x_hat: generated data
@@ -57,15 +57,24 @@ def train_test_divide(data_x, data_x_hat, data_t, data_t_hat, train_rate=0.8):
     train_t_hat = [data_t_hat[i] for i in train_idx]
     test_t_hat = [data_t_hat[i] for i in test_idx]
 
-    return train_x, train_x_hat, test_x, test_x_hat, train_t, train_t_hat, test_t, test_t_hat
+    return (
+        train_x,
+        train_x_hat,
+        test_x,
+        test_x_hat,
+        train_t,
+        train_t_hat,
+        test_t,
+        test_t_hat,
+    )
 
 
 def extract_time(data):
     """Returns Maximum sequence length and each sequence length.
-    
+
     Args:
         - data: original data
-      
+
     Returns:
         - time: extracted time information
         - max_seq_len: maximum sequence length
@@ -81,10 +90,10 @@ def extract_time(data):
 
 def rnn_cell(module_name, hidden_dim):
     """Basic RNN Cell.
-      
+
     Args:
         - module_name: gru, lstm, or lstmLN
-      
+
     Returns:
         - rnn_cell: RNN Cell
     """
@@ -95,22 +104,26 @@ def rnn_cell(module_name, hidden_dim):
         rnn_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_dim, activation=tf.nn.tanh)
     # LSTM
     elif module_name == "lstm":
-        rnn_cell = tf.contrib.rnn.BasicLSTMCell(num_units=hidden_dim, activation=tf.nn.tanh)
+        rnn_cell = tf.contrib.rnn.BasicLSTMCell(
+            num_units=hidden_dim, activation=tf.nn.tanh
+        )
     # LSTM Layer Normalization
     elif module_name == "lstmLN":
-        rnn_cell = tf.contrib.rnn.LayerNormBasicLSTMCell(num_units=hidden_dim, activation=tf.nn.tanh)
+        rnn_cell = tf.contrib.rnn.LayerNormBasicLSTMCell(
+            num_units=hidden_dim, activation=tf.nn.tanh
+        )
     return rnn_cell
 
 
 def random_generator(batch_size, z_dim, T_mb, max_seq_len):
     """Random vector generation.
-    
+
     Args:
         - batch_size: size of the random vector
         - z_dim: dimension of random vector
         - T_mb: time information for the random vector
         - max_seq_len: maximum sequence length
-      
+
     Returns:
         - Z_mb: generated random vector
     """
@@ -125,12 +138,12 @@ def random_generator(batch_size, z_dim, T_mb, max_seq_len):
 
 def batch_generator(data, time, batch_size):
     """Mini-batch generator.
-    
+
     Args:
         - data: time-series data
         - time: time information
         - batch_size: the number of samples in each batch
-      
+
     Returns:
         - X_mb: time-series data in each batch
         - T_mb: time information in each batch

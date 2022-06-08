@@ -3,14 +3,16 @@
 
 
 from __future__ import absolute_import, division, print_function
-import numpy as np
 
-from models.sequential import RNNmodel
+import numpy as np
+from fflows.models.sequential import RNNmodel
 
 
 def train_RNN(X_synth):
 
-    predictive_model = RNNmodel(mode="LSTM", HIDDEN_UNITS=100, NUM_LAYERS=2, MAX_STEPS=100, INPUT_SIZE=1)
+    predictive_model = RNNmodel(
+        mode="LSTM", HIDDEN_UNITS=100, NUM_LAYERS=2, MAX_STEPS=100, INPUT_SIZE=1
+    )
 
     X_ = [X_synth[k][: len(X_synth[k]) - 1] for k in range(len(X_synth))]
     Y_ = [X_synth[k][1:] for k in range(len(X_synth))]

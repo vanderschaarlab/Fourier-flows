@@ -8,22 +8,23 @@ This script generates sinusoidal synthetic data
 """
 
 from __future__ import division
+
 import numpy as np
 
 
 def sine_data_generation(no, seq_len, dim, freq_scale=1):
 
     """Sine data generation.
-  
+
     Args:
-    
+
     - no: the number of samples
     - seq_len: sequence length of the time-series
     - dim: feature dimensions
-    
+
     Returns:
     - data: generated data
-    
+
     """
     # Initialize the output
 

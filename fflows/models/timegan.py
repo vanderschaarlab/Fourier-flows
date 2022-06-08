@@ -1,7 +1,7 @@
 """Time-series Generative Adversarial Networks (TimeGAN) Codebase.
 
-Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
-"Time-series Generative Adversarial Networks," 
+Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar,
+"Time-series Generative Adversarial Networks,"
 Neural Information Processing Systems (NeurIPS), 2019.
 
 Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
@@ -16,21 +16,23 @@ timegan.py
 Note: Use original data as training set to generater synthetic data (time-series)
 """
 
+import numpy as np
+
 # Necessary Packages
 import tensorflow as tf
-import numpy as np
-from utils.misc import extract_time, rnn_cell, random_generator, batch_generator
+
+from fflows.utils.misc import batch_generator, extract_time, random_generator, rnn_cell
 
 
 def timegan(ori_data, parameters):
     """TimeGAN function.
-    
+
     Use original data as training set to generater synthetic data (time-series)
-    
+
     Args:
       - ori_data: original time-series data
       - parameters: TimeGAN network parameters
-    
+
     Returns:
       - generated_data: generated time-series data
     """
@@ -45,10 +47,10 @@ def timegan(ori_data, parameters):
 
     def MinMaxScaler(data):
         """Min-Max Normalizer.
-        
+
         Args:
           - data: raw data
-        
+
         Returns:
           - norm_data: normalized data
           - min_val: minimum values (for renormalization)
@@ -83,66 +85,90 @@ def timegan(ori_data, parameters):
 
     def embedder(X, T):
         """Embedding network between original feature space to latent space.
-        
+
         Args:
             - X: input time-series features
             - T: input time information
-        
+
         Returns:
             - H: embeddings
         """
         with tf.variable_scope("embedder", reuse=tf.AUTO_REUSE):
-            e_cell = tf.nn.rnn_cell.MultiRNNCell([rnn_cell(module_name, hidden_dim) for _ in range(num_layers)])
-            e_outputs, e_last_states = tf.nn.dynamic_rnn(e_cell, X, dtype=tf.float32, sequence_length=T)
-            H = tf.contrib.layers.fully_connected(e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid)
+            e_cell = tf.nn.rnn_cell.MultiRNNCell(
+                [rnn_cell(module_name, hidden_dim) for _ in range(num_layers)]
+            )
+            e_outputs, e_last_states = tf.nn.dynamic_rnn(
+                e_cell, X, dtype=tf.float32, sequence_length=T
+            )
+            H = tf.contrib.layers.fully_connected(
+                e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid
+            )
         return H
 
     def recovery(H, T):
         """Recovery network from latent space to original space.
-        
+
         Args:
             - H: latent representation
             - T: input time information
-        
+
         Returns:
             - X_tilde: recovered data
         """
         with tf.variable_scope("recovery", reuse=tf.AUTO_REUSE):
-            r_cell = tf.nn.rnn_cell.MultiRNNCell([rnn_cell(module_name, hidden_dim) for _ in range(num_layers)])
-            r_outputs, r_last_states = tf.nn.dynamic_rnn(r_cell, H, dtype=tf.float32, sequence_length=T)
-            X_tilde = tf.contrib.layers.fully_connected(r_outputs, dim, activation_fn=tf.nn.sigmoid)
+            r_cell = tf.nn.rnn_cell.MultiRNNCell(
+                [rnn_cell(module_name, hidden_dim) for _ in range(num_layers)]
+            )
+            r_outputs, r_last_states = tf.nn.dynamic_rnn(
+                r_cell, H, dtype=tf.float32, sequence_length=T
+            )
+            X_tilde = tf.contrib.layers.fully_connected(
+                r_outputs, dim, activation_fn=tf.nn.sigmoid
+            )
         return X_tilde
 
     def generator(Z, T):
         """Generator function: Generate time-series data in latent space.
-        
+
         Args:
             - Z: random variables
             - T: input time information
-        
+
         Returns:
             - E: generated embedding
         """
         with tf.variable_scope("generator", reuse=tf.AUTO_REUSE):
-            e_cell = tf.nn.rnn_cell.MultiRNNCell([rnn_cell(module_name, hidden_dim) for _ in range(num_layers)])
-            e_outputs, e_last_states = tf.nn.dynamic_rnn(e_cell, Z, dtype=tf.float32, sequence_length=T)
-            E = tf.contrib.layers.fully_connected(e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid)
+            e_cell = tf.nn.rnn_cell.MultiRNNCell(
+                [rnn_cell(module_name, hidden_dim) for _ in range(num_layers)]
+            )
+            e_outputs, e_last_states = tf.nn.dynamic_rnn(
+                e_cell, Z, dtype=tf.float32, sequence_length=T
+            )
+            E = tf.contrib.layers.fully_connected(
+                e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid
+            )
         return E
 
     def supervisor(H, T):
         """Generate next sequence using the previous sequence.
-        
+
         Args:
             - H: latent representation
             - T: input time information
-        
+
         Returns:
             - S: generated sequence based on the latent representations generated by the generator
         """
         with tf.variable_scope("supervisor", reuse=tf.AUTO_REUSE):
-            e_cell = tf.nn.rnn_cell.MultiRNNCell([rnn_cell(module_name, hidden_dim) for _ in range(num_layers - 1)])
-            e_outputs, e_last_states = tf.nn.dynamic_rnn(e_cell, H, dtype=tf.float32, sequence_length=T)
-            S = tf.contrib.layers.fully_connected(e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid)
+            e_cell = tf.nn.rnn_cell.MultiRNNCell(
+                [rnn_cell(module_name, hidden_dim) for _ in range(num_layers - 1)]
+            )
+            e_outputs, e_last_states = tf.nn.dynamic_rnn(
+                e_cell, H, dtype=tf.float32, sequence_length=T
+            )
+            S = tf.contrib.layers.fully_connected(
+                e_outputs, hidden_dim, activation_fn=tf.nn.sigmoid
+            )
         return S
 
     def discriminator(H, T):
@@ -151,13 +177,17 @@ def timegan(ori_data, parameters):
         Args:
             - H: latent representation
             - T: input time information
-        
+
         Returns:
             - Y_hat: classification results between original and synthetic time-series
         """
         with tf.variable_scope("discriminator", reuse=tf.AUTO_REUSE):
-            d_cell = tf.nn.rnn_cell.MultiRNNCell([rnn_cell(module_name, hidden_dim) for _ in range(num_layers)])
-            d_outputs, d_last_states = tf.nn.dynamic_rnn(d_cell, H, dtype=tf.float32, sequence_length=T)
+            d_cell = tf.nn.rnn_cell.MultiRNNCell(
+                [rnn_cell(module_name, hidden_dim) for _ in range(num_layers)]
+            )
+            d_outputs, d_last_states = tf.nn.dynamic_rnn(
+                d_cell, H, dtype=tf.float32, sequence_length=T
+            )
             Y_hat = tf.contrib.layers.fully_connected(d_outputs, 1, activation_fn=None)
         return Y_hat
 
@@ -201,9 +231,14 @@ def timegan(ori_data, parameters):
 
     # 3. Two Momments
     G_loss_V1 = tf.reduce_mean(
-        tf.abs(tf.sqrt(tf.nn.moments(X_hat, [0])[1] + 1e-6) - tf.sqrt(tf.nn.moments(X, [0])[1] + 1e-6))
+        tf.abs(
+            tf.sqrt(tf.nn.moments(X_hat, [0])[1] + 1e-6)
+            - tf.sqrt(tf.nn.moments(X, [0])[1] + 1e-6)
+        )
     )
-    G_loss_V2 = tf.reduce_mean(tf.abs((tf.nn.moments(X_hat, [0])[0]) - (tf.nn.moments(X, [0])[0])))
+    G_loss_V2 = tf.reduce_mean(
+        tf.abs((tf.nn.moments(X_hat, [0])[0]) - (tf.nn.moments(X, [0])[0]))
+    )
 
     G_loss_V = G_loss_V1 + G_loss_V2
 
@@ -236,7 +271,14 @@ def timegan(ori_data, parameters):
         _, step_e_loss = sess.run([E0_solver, E_loss_T0], feed_dict={X: X_mb, T: T_mb})
         # Checkpoint
         if itt % 1000 == 0:
-            print("step: " + str(itt) + "/" + str(iterations) + ", e_loss: " + str(np.round(np.sqrt(step_e_loss), 4)))
+            print(
+                "step: "
+                + str(itt)
+                + "/"
+                + str(iterations)
+                + ", e_loss: "
+                + str(np.round(np.sqrt(step_e_loss), 4))
+            )
 
     print("Finish Embedding Network Training")
 
@@ -249,10 +291,19 @@ def timegan(ori_data, parameters):
         # Random vector generation
         Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
         # Train generator
-        _, step_g_loss_s = sess.run([GS_solver, G_loss_S], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})
+        _, step_g_loss_s = sess.run(
+            [GS_solver, G_loss_S], feed_dict={Z: Z_mb, X: X_mb, T: T_mb}
+        )
         # Checkpoint
         if itt % 1000 == 0:
-            print("step: " + str(itt) + "/" + str(iterations) + ", s_loss: " + str(np.round(np.sqrt(step_g_loss_s), 4)))
+            print(
+                "step: "
+                + str(itt)
+                + "/"
+                + str(iterations)
+                + ", s_loss: "
+                + str(np.round(np.sqrt(step_g_loss_s), 4))
+            )
 
     print("Finish Training with Supervised Loss Only")
 
@@ -268,10 +319,13 @@ def timegan(ori_data, parameters):
             Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
             # Train generator
             _, step_g_loss_u, step_g_loss_s, step_g_loss_v = sess.run(
-                [G_solver, G_loss_U, G_loss_S, G_loss_V], feed_dict={Z: Z_mb, X: X_mb, T: T_mb}
+                [G_solver, G_loss_U, G_loss_S, G_loss_V],
+                feed_dict={Z: Z_mb, X: X_mb, T: T_mb},
             )
             # Train embedder
-            _, step_e_loss_t0 = sess.run([E_solver, E_loss_T0], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})
+            _, step_e_loss_t0 = sess.run(
+                [E_solver, E_loss_T0], feed_dict={Z: Z_mb, X: X_mb, T: T_mb}
+            )
 
         # Discriminator training
         # Set mini-batch
@@ -282,7 +336,9 @@ def timegan(ori_data, parameters):
         check_d_loss = sess.run(D_loss, feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
         # Train discriminator (only when the discriminator does not work well)
         if check_d_loss > 0.15:
-            _, step_d_loss = sess.run([D_solver, D_loss], feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
+            _, step_d_loss = sess.run(
+                [D_solver, D_loss], feed_dict={X: X_mb, T: T_mb, Z: Z_mb}
+            )
 
         # Print multiple checkpoints
         if itt % 1000 == 0:

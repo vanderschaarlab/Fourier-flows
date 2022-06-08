@@ -8,42 +8,40 @@ This script contains the implementation for the spectral filter module of the Fo
 """
 from __future__ import absolute_import, division, print_function
 
+import sys
+import warnings
+
 import torch
 import torch.nn as nn
-
 from torch.distributions.multivariate_normal import MultivariateNormal
-
-import sys
-
-import warnings
 
 warnings.filterwarnings("ignore")
 
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
-from models.sequential import RNN
+from fflows.models.sequential import RNN
 
 
 class SpectralFilter(nn.Module):
 
     """
     Spectral Filter torch module
-    
+
     >> attributes <<
-    
+
     :d: number of input dimensions
-            
+
     :k: dimension of split in the input space
-    
+
     :FFT: number of FFT components
-    
+
     :hidden: number of hidden units in the spectral filter layer
-    
+
     :flip: boolean indicator on whether to flip the split dimensions
-    
+
     :RNN: boolean indicator on whether to use an RNN in spectral filtering
-    
+
     """
 
     def __init__(self, d, k, FFT, hidden, flip=False, RNN=False):
@@ -68,12 +66,14 @@ class SpectralFilter(nn.Module):
 
             self.in_size, self.out_size = self.out_size, self.in_size
 
-        self.sig_net = nn.Sequential(  # RNN(mode="RNN", HIDDEN_UNITS=20, INPUT_SIZE=1,),
-            nn.Linear(self.in_size, hidden),
-            nn.Sigmoid(),  # nn.LeakyReLU(),
-            nn.Linear(hidden, hidden),
-            nn.Sigmoid(),  # nn.Tanh(),
-            nn.Linear(hidden, self.out_size),
+        self.sig_net = (
+            nn.Sequential(  # RNN(mode="RNN", HIDDEN_UNITS=20, INPUT_SIZE=1,),
+                nn.Linear(self.in_size, hidden),
+                nn.Sigmoid(),  # nn.LeakyReLU(),
+                nn.Linear(hidden, hidden),
+                nn.Sigmoid(),  # nn.Tanh(),
+                nn.Linear(hidden, self.out_size),
+            )
         )
 
         self.mu_net = nn.Sequential(  # RNN(mode="RNN", HIDDEN_UNITS=20, INPUT_SIZE=1,),
@@ -90,11 +90,11 @@ class SpectralFilter(nn.Module):
     def forward(self, x, flip=False):
 
         """forward steps
-        
-           Similar to RealNVP, see:
-           Dinh, Laurent, Jascha Sohl-Dickstein, and Samy Bengio. 
-           "Density estimation using real nvp." arXiv preprint arXiv:1605.08803 (2016).
-        
+
+        Similar to RealNVP, see:
+        Dinh, Laurent, Jascha Sohl-Dickstein, and Samy Bengio.
+        "Density estimation using real nvp." arXiv preprint arXiv:1605.08803 (2016).
+
         """
 
         x1, x2 = x[:, : self.k], x[:, self.k :]
@@ -142,21 +142,21 @@ class AttentionFilter(nn.Module):
 
     """
     Attention Filter torch module
-    
+
     >> attributes <<
-    
+
     :d: number of input dimensions
-            
+
     :k: dimension of split in the input space
-    
+
     :FFT: number of FFT components
-    
+
     :hidden: number of hidden units in the spectral filter layer
-    
+
     :flip: boolean indicator on whether to flip the split dimensions
-    
+
     :RNN: boolean indicator on whether to use an RNN in spectral filtering
-    
+
     """
 
     def __init__(self, d, k, FFT, hidden, flip=False):
@@ -182,7 +182,11 @@ class AttentionFilter(nn.Module):
             self.in_size, self.out_size = self.out_size, self.in_size
 
         self.sig_net = nn.Sequential(
-            RNN(mode="LSTM", HIDDEN_UNITS=20, INPUT_SIZE=1,),
+            RNN(
+                mode="LSTM",
+                HIDDEN_UNITS=20,
+                INPUT_SIZE=1,
+            ),
             nn.Linear(self.in_size, hidden),
             nn.Sigmoid(),  # nn.LeakyReLU(),
             nn.Linear(hidden, hidden),
@@ -191,7 +195,11 @@ class AttentionFilter(nn.Module):
         )
 
         self.mu_net = nn.Sequential(
-            RNN(mode="LSTM", HIDDEN_UNITS=20, INPUT_SIZE=1,),
+            RNN(
+                mode="LSTM",
+                HIDDEN_UNITS=20,
+                INPUT_SIZE=1,
+            ),
             nn.Linear(self.in_size, hidden),
             nn.Sigmoid(),  # nn.LeakyReLU(),
             nn.Linear(hidden, hidden),
@@ -205,11 +213,11 @@ class AttentionFilter(nn.Module):
     def forward(self, x, flip=False):
 
         """forward steps
-        
-           Similar to RealNVP, see:
-           Dinh, Laurent, Jascha Sohl-Dickstein, and Samy Bengio. 
-           "Density estimation using real nvp." arXiv preprint arXiv:1605.08803 (2016).
-        
+
+        Similar to RealNVP, see:
+        Dinh, Laurent, Jascha Sohl-Dickstein, and Samy Bengio.
+        "Density estimation using real nvp." arXiv preprint arXiv:1605.08803 (2016).
+
         """
 
         x1, x2 = x[:, : self.k], x[:, self.k :]

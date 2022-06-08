@@ -5,28 +5,26 @@
 from __future__ import absolute_import, division, print_function
 
 import argparse
+import pickle
+import warnings
 
 import numpy as np
 import scipy.stats as st
-import pickle
-
-import warnings
 
 warnings.filterwarnings("ignore")
 
 
-from SequentialFlows import FourierFlow, RealNVP
-
-from metrics.PRcurve import computeF1
 from metrics.MAE import computeMAE
+from metrics.PRcurve import computeF1
+from fflows import FourierFlow, RealNVP
 
 
 def MinMaxScaler(data):
     """Min Max normalizer.
-  
+
     Args:
     - data: original data
-  
+
     Returns:
     - norm_data: normalized data
     """
@@ -41,11 +39,11 @@ def MinMaxScaler(data):
 def real_data_loading(data_name, seq_len):
 
     """Load and preprocess real-world datasets.
-  
+
     Args:
     - data_name: stock or energy
     - seq_len: sequence length
-    
+
     Returns:
     - data: preprocessed data.
     """
@@ -123,9 +121,30 @@ FF_model_params = dict(
 
 FF_train_params = dict(
     {
-        "stock": dict({"epochs": 1000, "batch_size": 500, "learning_rate": 1e-3, "display_step": 100}),
-        "energy": dict({"epochs": 1500, "batch_size": 1000, "learning_rate": 1e-3, "display_step": 100}),
-        "lung": dict({"epochs": 500, "batch_size": 2000, "learning_rate": 1e-3, "display_step": 100}),
+        "stock": dict(
+            {
+                "epochs": 1000,
+                "batch_size": 500,
+                "learning_rate": 1e-3,
+                "display_step": 100,
+            }
+        ),
+        "energy": dict(
+            {
+                "epochs": 1500,
+                "batch_size": 1000,
+                "learning_rate": 1e-3,
+                "display_step": 100,
+            }
+        ),
+        "lung": dict(
+            {
+                "epochs": 500,
+                "batch_size": 2000,
+                "learning_rate": 1e-3,
+                "display_step": 100,
+            }
+        ),
     }
 )
 
@@ -139,22 +158,71 @@ RNVP_model_params = dict(
 
 RNVP_train_params = dict(
     {
-        "stock": dict({"epochs": 500, "batch_size": 500, "learning_rate": 1e-4, "display_step": 100}),
-        "energy": dict({"epochs": 500, "batch_size": 500, "learning_rate": 1e-3, "display_step": 100}),
-        "lung": dict({"epochs": 500, "batch_size": 500, "learning_rate": 1e-3, "display_step": 100}),
+        "stock": dict(
+            {
+                "epochs": 500,
+                "batch_size": 500,
+                "learning_rate": 1e-4,
+                "display_step": 100,
+            }
+        ),
+        "energy": dict(
+            {
+                "epochs": 500,
+                "batch_size": 500,
+                "learning_rate": 1e-3,
+                "display_step": 100,
+            }
+        ),
+        "lung": dict(
+            {
+                "epochs": 500,
+                "batch_size": 500,
+                "learning_rate": 1e-3,
+                "display_step": 100,
+            }
+        ),
     }
 )
 
 TimeGAN_model_params = dict(
     {
-        "stock": dict({"module": "gru", "hidden_dim": 24, "num_layer": 3, "iterations": 500, "batch_size": 128}),
-        "energy": dict({"module": "gru", "hidden_dim": 12, "num_layer": 3, "iterations": 100, "batch_size": 128}),
-        "lung": dict({"module": "gru", "hidden_dim": 24, "num_layer": 3, "iterations": 500, "batch_size": 128}),
+        "stock": dict(
+            {
+                "module": "gru",
+                "hidden_dim": 24,
+                "num_layer": 3,
+                "iterations": 500,
+                "batch_size": 128,
+            }
+        ),
+        "energy": dict(
+            {
+                "module": "gru",
+                "hidden_dim": 12,
+                "num_layer": 3,
+                "iterations": 100,
+                "batch_size": 128,
+            }
+        ),
+        "lung": dict(
+            {
+                "module": "gru",
+                "hidden_dim": 24,
+                "num_layer": 3,
+                "iterations": 500,
+                "batch_size": 128,
+            }
+        ),
     }
 )
 
 model_parameters = dict(
-    {"Fourier flow": FF_model_params, "RealNVP": RNVP_model_params, "TimeGAN": TimeGAN_model_params}
+    {
+        "Fourier flow": FF_model_params,
+        "RealNVP": RNVP_model_params,
+        "TimeGAN": TimeGAN_model_params,
+    }
 )
 
 train_parameters = dict({"Fourier flow": FF_train_params, "RealNVP": RNVP_train_params})
@@ -196,20 +264,26 @@ def run_experiments(T, data_sets, baselines, num_experiments=5, n_samples=10000)
 
                 if baseline == "Fourier flow":
 
-                    model = FourierFlow(**model_parameters[baseline][dataset], fft_size=T + 1)
+                    model = FourierFlow(
+                        **model_parameters[baseline][dataset], fft_size=T + 1
+                    )
 
                 elif baseline == "RealNVP":
 
                     model = RealNVP(**model_parameters[baseline][dataset], T=T + 1)
-                
+
                 else:
 
                     raise ValueError(f"Baseline {baseline} not implemented.")
 
                 _ = model.fit(X, **train_parameters[baseline][dataset])
 
-                F1_scores[dataset][baseline].append(computeF1(X, model.sample(n_samples)))
-                MAE_scores[dataset][baseline].append(computeMAE(X, model.sample(n_samples)))
+                F1_scores[dataset][baseline].append(
+                    computeF1(X, model.sample(n_samples))
+                )
+                MAE_scores[dataset][baseline].append(
+                    computeMAE(X, model.sample(n_samples))
+                )
 
                 print("F1 score", F1_scores[dataset][baseline][-1])
                 print("MAE score", MAE_scores[dataset][baseline][-1])
@@ -226,7 +300,11 @@ def main(args):
     baselines = args.baselines
 
     F1_scores, MAE_scores = run_experiments(
-        args.T, data_sets, baselines, num_experiments=args.n_exps, n_samples=args.n_samples
+        args.T,
+        data_sets,
+        baselines,
+        num_experiments=args.n_exps,
+        n_samples=args.n_samples,
     )
 
     for dataset in data_sets:
@@ -234,8 +312,14 @@ def main(args):
         print("Results for ", dataset)
 
         for baseline in baselines:
-            print(baseline + "F1 scores: ", mean_confidence_interval(F1_scores[dataset][baseline]))
-            print(baseline + "MAE scores: ", mean_confidence_interval(MAE_scores[dataset][baseline]))
+            print(
+                baseline + "F1 scores: ",
+                mean_confidence_interval(F1_scores[dataset][baseline]),
+            )
+            print(
+                baseline + "MAE scores: ",
+                mean_confidence_interval(MAE_scores[dataset][baseline]),
+            )
 
 
 if __name__ == "__main__":

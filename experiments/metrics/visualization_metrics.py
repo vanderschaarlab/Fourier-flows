@@ -1,7 +1,7 @@
 """Time-series Generative Adversarial Networks (TimeGAN) Codebase.
 
-Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
-"Time-series Generative Adversarial Networks," 
+Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar,
+"Time-series Generative Adversarial Networks,"
 Neural Information Processing Systems (NeurIPS), 2019.
 
 Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
@@ -16,21 +16,22 @@ visualization_metrics.py
 Note: Use PCA or tSNE for generated and original data visualization
 """
 
-# Necessary packages
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.decomposition import PCA
+
+# Necessary packages
+from sklearn.manifold import TSNE
 
 
 def visualization(ori_data, generated_data, analysis):
     """Using PCA or tSNE for generated and original data visualization.
-  
-  Args:
-    - ori_data: original data
-    - generated_data: generated synthetic data
-    - analysis: tsne or pca
-  """
+
+    Args:
+      - ori_data: original data
+      - generated_data: generated synthetic data
+      - analysis: tsne or pca
+    """
     # Analysis sample size (for faster computation)
     anal_sample_no = min([1000, len(ori_data)])
     idx = np.random.permutation(len(ori_data))[:anal_sample_no]
@@ -47,15 +48,24 @@ def visualization(ori_data, generated_data, analysis):
     for i in range(anal_sample_no):
         if i == 0:
             prep_data = np.reshape(np.mean(ori_data[0, :, :], 1), [1, seq_len])
-            prep_data_hat = np.reshape(np.mean(generated_data[0, :, :], 1), [1, seq_len])
+            prep_data_hat = np.reshape(
+                np.mean(generated_data[0, :, :], 1), [1, seq_len]
+            )
         else:
-            prep_data = np.concatenate((prep_data, np.reshape(np.mean(ori_data[i, :, :], 1), [1, seq_len])))
+            prep_data = np.concatenate(
+                (prep_data, np.reshape(np.mean(ori_data[i, :, :], 1), [1, seq_len]))
+            )
             prep_data_hat = np.concatenate(
-                (prep_data_hat, np.reshape(np.mean(generated_data[i, :, :], 1), [1, seq_len]))
+                (
+                    prep_data_hat,
+                    np.reshape(np.mean(generated_data[i, :, :], 1), [1, seq_len]),
+                )
             )
 
     # Visualization parameter
-    colors = ["red" for i in range(anal_sample_no)] + ["blue" for i in range(anal_sample_no)]
+    colors = ["red" for i in range(anal_sample_no)] + [
+        "blue" for i in range(anal_sample_no)
+    ]
 
     if analysis == "pca":
         # PCA Analysis
@@ -66,9 +76,19 @@ def visualization(ori_data, generated_data, analysis):
 
         # Plotting
         f, ax = plt.subplots(1)
-        plt.scatter(pca_results[:, 0], pca_results[:, 1], c=colors[:anal_sample_no], alpha=0.2, label="Original")
         plt.scatter(
-            pca_hat_results[:, 0], pca_hat_results[:, 1], c=colors[anal_sample_no:], alpha=0.2, label="Synthetic"
+            pca_results[:, 0],
+            pca_results[:, 1],
+            c=colors[:anal_sample_no],
+            alpha=0.2,
+            label="Original",
+        )
+        plt.scatter(
+            pca_hat_results[:, 0],
+            pca_hat_results[:, 1],
+            c=colors[anal_sample_no:],
+            alpha=0.2,
+            label="Synthetic",
         )
 
         ax.legend()

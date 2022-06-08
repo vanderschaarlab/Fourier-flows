@@ -1,7 +1,7 @@
 """Time-series Generative Adversarial Networks (TimeGAN) Codebase.
 
-Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
-"Time-series Generative Adversarial Networks," 
+Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar,
+"Time-series Generative Adversarial Networks,"
 Neural Information Processing Systems (NeurIPS), 2019.
 
 Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
@@ -20,20 +20,21 @@ data_loading.py
   - energy_data: http://archive.ics.uci.edu/ml/datasets/Appliances+energy+prediction
 """
 
+import pickle
+
 ## Necessary Packages
 import numpy as np
-import pickle
 
 
 def MinMaxScaler(data):
     """Min Max normalizer.
-  
-  Args:
-    - data: original data
-  
-  Returns:
-    - norm_data: normalized data
-  """
+
+    Args:
+      - data: original data
+
+    Returns:
+      - norm_data: normalized data
+    """
     numerator = data - np.min(data, 0)
     denominator = np.max(data, 0) - np.min(data, 0)
     norm_data = numerator / (denominator + 1e-7)
@@ -42,15 +43,15 @@ def MinMaxScaler(data):
 
 def sine_data_generation(no, seq_len, dim):
     """Sine data generation.
-  
-  Args:
-    - no: the number of samples
-    - seq_len: sequence length of the time-series
-    - dim: feature dimensions
-    
-  Returns:
-    - data: generated data
-  """
+
+    Args:
+      - no: the number of samples
+      - seq_len: sequence length of the time-series
+      - dim: feature dimensions
+
+    Returns:
+      - data: generated data
+    """
     # Initialize the output
     data = list()
 
@@ -84,11 +85,11 @@ def sine_data_generation(no, seq_len, dim):
 def real_data_loading(data_name, seq_len):
 
     """Load and preprocess real-world datasets.
-  
+
     Args:
     - data_name: stock or energy
     - seq_len: sequence length
-    
+
     Returns:
     - data: preprocessed data.
     """

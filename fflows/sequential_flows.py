@@ -8,17 +8,15 @@ This script contains the implementation for the spectral filter module of the Fo
 """
 from __future__ import absolute_import, division, print_function
 
+import sys
+import warnings
+
 import numpy as np
 import torch
 import torch.nn as nn
-from filters.spectral import SpectralFilter, AttentionFilter
-from fourier.transforms import DFT
-
+from fflows.filters.spectral import AttentionFilter, SpectralFilter
+from fflows.fourier.transforms import DFT
 from torch.distributions.multivariate_normal import MultivariateNormal
-
-import sys
-
-import warnings
 
 warnings.filterwarnings("ignore")
 
@@ -46,7 +44,12 @@ class FourierFlow(nn.Module):
             self.flips = [False for i in range(n_flows)]
 
         self.bijectors = nn.ModuleList(
-            [SpectralFilter(self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]) for _ in range(n_flows)]
+            [
+                SpectralFilter(
+                    self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]
+                )
+                for _ in range(n_flows)
+            ]
         )
 
         self.FourierTransform = DFT(N_fft=self.fft_size)
@@ -54,7 +57,6 @@ class FourierFlow(nn.Module):
     def forward(self, x):
 
         if self.FFT:
-
             x = self.FourierTransform(x)[0]
 
             if self.normalize:
@@ -81,7 +83,9 @@ class FourierFlow(nn.Module):
         if self.FFT:
 
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(-1, self.d + 1)
+                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
+                    -1, self.d + 1
+                )
 
             z = self.FourierTransform.inverse(z)
 
@@ -171,7 +175,12 @@ class RealNVP(nn.Module):
             self.flips = [False for i in range(n_flows)]
 
         self.bijectors = nn.ModuleList(
-            [SpectralFilter(self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]) for _ in range(n_flows)]
+            [
+                SpectralFilter(
+                    self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]
+                )
+                for _ in range(n_flows)
+            ]
         )
 
     def forward(self, x):
@@ -204,7 +213,9 @@ class RealNVP(nn.Module):
         if self.FFT:
 
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(-1, self.d + 1)
+                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
+                    -1, self.d + 1
+                )
 
             z = self.FourierTransform.inverse(z)
 
@@ -289,7 +300,12 @@ class TimeFlow(nn.Module):
             self.flips = [False for i in range(n_flows)]
 
         self.bijectors = nn.ModuleList(
-            [AttentionFilter(self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]) for _ in range(n_flows)]
+            [
+                AttentionFilter(
+                    self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]
+                )
+                for _ in range(n_flows)
+            ]
         )
 
     def forward(self, x):
@@ -322,7 +338,9 @@ class TimeFlow(nn.Module):
         if self.FFT:
 
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(-1, self.d + 1)
+                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
+                    -1, self.d + 1
+                )
 
             z = self.FourierTransform.inverse(z)
 

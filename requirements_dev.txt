@@ -3,10 +3,10 @@
 bandit
 black
 flake8
-pre-commit
-pytest
 jupyterlab
 matplotlib
 notebook
-tensorflow==1.15.5
+pre-commit
+pytest
 seaborn
+tensorflow==1.15.5

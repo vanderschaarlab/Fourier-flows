@@ -1,4 +1,4 @@
 numpy
-torch
 scikit-learn
 scipy
+torch

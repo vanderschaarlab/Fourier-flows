@@ -3,10 +3,10 @@
 
 from __future__ import absolute_import, division, print_function
 
+import sys
 
 import numpy as np
 import torch
-import sys
 
 if not sys.warnoptions:
     import warnings
@@ -16,7 +16,12 @@ if not sys.warnoptions:
 
 def autoregressive(X, w):
 
-    return np.array([np.sum(X[0 : k + 1] * np.flip(w[0 : k + 1]).reshape(-1, 1)) for k in range(len(X))])
+    return np.array(
+        [
+            np.sum(X[0 : k + 1] * np.flip(w[0 : k + 1]).reshape(-1, 1))
+            for k in range(len(X))
+        ]
+    )
 
 
 def create_autoregressive_data(
@@ -33,7 +38,7 @@ def create_autoregressive_data(
     # Create the input features
 
     X = [np.random.normal(X_m, X_v, (seq_len, n_features)) for k in range(n_samples)]
-    w = np.array([memory_factor ** k for k in range(seq_len)])
+    w = np.array([memory_factor**k for k in range(seq_len)])
 
     if mode == "noise-sweep":
 
@@ -42,7 +47,9 @@ def create_autoregressive_data(
                 (
                     autoregressive(X[k], w).reshape(seq_len, n_features)
                     + np.random.normal(0, noise_profile[u], (seq_len, n_features))
-                ).reshape(seq_len,)
+                ).reshape(
+                    seq_len,
+                )
                 for k in range(n_samples)
             ]
             for u in range(len(noise_profile))
@@ -53,8 +60,13 @@ def create_autoregressive_data(
         Y = [
             (
                 autoregressive(X[k], w).reshape(seq_len, n_features)
-                + (torch.normal(mean=0.0, std=torch.tensor(noise_profile))).detach().numpy().reshape(-1, n_features)
-            ).reshape(seq_len,)
+                + (torch.normal(mean=0.0, std=torch.tensor(noise_profile)))
+                .detach()
+                .numpy()
+                .reshape(-1, n_features)
+            ).reshape(
+                seq_len,
+            )
             for k in range(n_samples)
         ]
 
