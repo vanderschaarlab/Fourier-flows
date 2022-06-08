@@ -50,17 +50,9 @@ class SpectralFilter(nn.Module):
 
         self.d, self.k = d, k
 
-        if FFT:
-
-            self.out_size = self.d - self.k + 1
-            self.pz_size = self.d + 1
-            self.in_size = self.k
-
-        else:
-
-            self.out_size = self.d - self.k
-            self.pz_size = self.d
-            self.in_size = self.k
+        self.out_size = self.d - self.k
+        self.pz_size = self.d
+        self.in_size = self.k
 
         if flip:
 

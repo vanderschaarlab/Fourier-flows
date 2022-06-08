@@ -26,7 +26,7 @@ class FourierFlow(nn.Module):
 
         self.FFT = FFT
         self.normalize = normalize
-        self.n_flows =n_flows
+        self.n_flows = n_flows
         self.hidden = hidden
 
         if flip:
@@ -42,7 +42,7 @@ class FourierFlow(nn.Module):
             if self.normalize:
                 x = (x - self.fft_mean) / (self.fft_std + 1e-8)
 
-            x = x.view(-1, self.d + 1)
+            x = x.view(-1, self.d)
 
         log_jacobs = []
 
@@ -55,17 +55,12 @@ class FourierFlow(nn.Module):
         return x, log_pz, sum(log_jacobs)
 
     def inverse(self, z):
-
         for bijector, f in zip(reversed(self.bijectors), reversed(self.flips)):
-
             z = bijector.inverse(z, flip=f)
 
         if self.FFT:
-
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
-                    -1, self.d + 1
-                )
+                z = z * self.fft_std.view(-1, self.d) + self.fft_mean.view(-1, self.d)
 
             z = self.FourierTransform.inverse(z)
 
@@ -74,10 +69,18 @@ class FourierFlow(nn.Module):
     def fit(self, X, epochs=500, batch_size=128, learning_rate=1e-3, display_step=100):
         X_train = torch.from_numpy(np.array(X)).float()
 
+        self.carry_flag = False
+        if np.prod(X_train.shape[1:]) % 2 == 1:
+            repeat_last = X_train[:, :, -1:]
+            X_train = torch.concat([X_train, repeat_last], dim=2)
+            self.carry_flag = True
+
         self.individual_shape = X_train.shape[1:]
 
         self.d = np.prod(self.individual_shape)
-        self.k = int(np.floor(self.d / 2))
+        self.k = int(np.ceil(self.d / 2))
+
+        assert self.d % 2 == 0
 
         # Prepare models
         self.bijectors = nn.ModuleList(
@@ -95,6 +98,8 @@ class FourierFlow(nn.Module):
 
         # for normalizing the spectral transforms
         X_train_spectral = self.FourierTransform(X_train)[0]
+        assert X_train_spectral.shape[-1] == self.k
+
         self.fft_mean = torch.mean(X_train_spectral, dim=0)
         self.fft_std = torch.std(X_train_spectral, dim=0)
         optim = torch.optim.Adam(self.parameters(), lr=learning_rate)
@@ -132,21 +137,18 @@ class FourierFlow(nn.Module):
         return losses
 
     def sample(self, n_samples):
-
-        if self.FFT:
-
-            mu, cov = torch.zeros(self.d + 1), torch.eye(self.d + 1)
-
-        else:
-
-            mu, cov = torch.zeros(self.d), torch.eye(self.d)
+        mu, cov = torch.zeros(self.d), torch.eye(self.d)
 
         p_Z = MultivariateNormal(mu, cov)
         z = p_Z.rsample(sample_shape=(n_samples,))
 
         X_sample = self.inverse(z)
+        X_sample = X_sample.reshape(-1, *self.individual_shape)
 
-        return X_sample.reshape(-1, *self.individual_shape)
+        if self.carry_flag:
+            X_sample = X_sample[:, :, :-1]
+
+        return X_sample
 
 
 class RealNVP(nn.Module):
@@ -173,7 +175,7 @@ class RealNVP(nn.Module):
             if self.normalize:
                 x = (x - self.fft_mean) / (self.fft_std + 1e-8)
 
-            x = x.view(-1, self.d + 1)
+            x = x.view(-1, self.d)
 
         log_jacobs = []
 
@@ -194,9 +196,7 @@ class RealNVP(nn.Module):
         if self.FFT:
 
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
-                    -1, self.d + 1
-                )
+                z = z * self.fft_std.view(-1, self.d) + self.fft_mean.view(-1, self.d1)
 
             z = self.FourierTransform.inverse(z)
 
@@ -259,7 +259,7 @@ class RealNVP(nn.Module):
 
         if self.FFT:
 
-            mu, cov = torch.zeros(self.d + 1), torch.eye(self.d + 1)
+            mu, cov = torch.zeros(self.d), torch.eye(self.d)
 
         else:
 
@@ -309,7 +309,7 @@ class TimeFlow(nn.Module):
             if self.normalize:
                 x = (x - self.fft_mean) / self.fft_std
 
-            x = x.view(-1, self.d + 1)
+            x = x.view(-1, self.d)
 
         log_jacobs = []
 
@@ -330,9 +330,7 @@ class TimeFlow(nn.Module):
         if self.FFT:
 
             if self.normalize:
-                z = z * self.fft_std.view(-1, self.d + 1) + self.fft_mean.view(
-                    -1, self.d + 1
-                )
+                z = z * self.fft_std.view(-1, self.d) + self.fft_mean.view(-1, self.d)
 
             z = self.FourierTransform.inverse(z)
 
@@ -384,7 +382,7 @@ class TimeFlow(nn.Module):
 
         if self.FFT:
 
-            mu, cov = torch.zeros(self.d + 1), torch.eye(self.d + 1)
+            mu, cov = torch.zeros(self.d), torch.eye(self.d)
 
         else:
 

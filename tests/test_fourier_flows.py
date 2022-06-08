@@ -4,18 +4,21 @@ from fflows import FourierFlow
 from data import sine_data_generation
 
 
-@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("FFT", [True, False])
 @pytest.mark.parametrize("flip", [True, False])
-def test_training(normalize: bool, FFT: bool, flip: bool) -> None:
-    T = 11
+@pytest.mark.parametrize("T", [12, 11])
+@pytest.mark.parametrize("dims", [4, 6, 3])
+@pytest.mark.parametrize("n_flows", [5, 10, 15])
+def test_training(
+    normalize: bool, FFT: bool, flip: bool, T: int, dims: int, n_flows: int
+) -> None:
     n_samples = 100
-    dims = 3
-    X = sine_data_generation(no=n_samples, seq_len=T, dim=3)
+    X = sine_data_generation(no=n_samples, seq_len=T, dim=dims)
 
     ff_params = {
         "hidden": 11,
-        "n_flows": 11,
+        "n_flows": n_flows,
         "normalize": normalize,
         "FFT": FFT,
         "flip": flip,
@@ -31,10 +34,10 @@ def test_training(normalize: bool, FFT: bool, flip: bool) -> None:
     _ = model.fit(X, **train_params)
 
 
-def test_generation() -> None:
-    T = 11
+@pytest.mark.parametrize("T", [12, 11])
+@pytest.mark.parametrize("dims", [4, 3])
+def test_generation(T: int, dims: int) -> None:
     n_samples = 100
-    dims = 3
     X = sine_data_generation(no=n_samples, seq_len=T, dim=dims)
 
     ff_params = {"hidden": 11, "n_flows": 11, "normalize": False}

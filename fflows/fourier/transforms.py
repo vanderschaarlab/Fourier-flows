@@ -7,9 +7,6 @@ This script contains functions for applying fourier transform and its inverse in
 Used as the "Fourier Transform" step in a Fourier Flow, can be preceded by other torch modules.
 
 """
-
-from __future__ import absolute_import, division, print_function
-
 import sys
 import warnings
 
@@ -60,10 +57,10 @@ def reconstruct_DFT(x, component="real"):
     """
 
     if component == "real":
-        x_rec = torch.cat([x[0, :], flip(x[0, :], dim=0)[1:]], dim=0)
+        x_rec = torch.cat([x[0, :], flip(x[0, :], dim=0)], dim=0)
 
     elif component == "imag":
-        x_rec = torch.cat([x[1, :], -1 * flip(x[1, :], dim=0)[1:]], dim=0)
+        x_rec = torch.cat([x[1, :], -1 * flip(x[1, :], dim=0)], dim=0)
 
     return x_rec
 
@@ -93,7 +90,7 @@ class DFT(nn.Module):
         super(DFT, self).__init__()
 
         self.N_fft = N_fft
-        self.crop_size = int(self.N_fft / 2) + 1
+        self.crop_size = int(np.ceil(self.N_fft / 2))
         base_mu, base_cov = torch.zeros(self.crop_size * 2), torch.eye(
             self.crop_size * 2
         )

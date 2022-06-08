@@ -5,11 +5,11 @@ from data import sine_data_generation
 
 
 @pytest.mark.parametrize("normalize", [True, False])
-def test_training(normalize: bool) -> None:
-    T = 11
+@pytest.mark.parametrize("T", [11, 12])
+@pytest.mark.parametrize("dims", [3, 4, 6])
+def test_training(normalize: bool, T: int, dims: int) -> None:
     n_samples = 100
-    dims = 3
-    X = sine_data_generation(no=n_samples, seq_len=T, dim=3)
+    X = sine_data_generation(no=n_samples, seq_len=T, dim=dims)
 
     model_params = {"hidden": 11, "n_flows": 11, "normalize": normalize}
     train_params = {
