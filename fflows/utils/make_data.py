@@ -38,7 +38,7 @@ def create_autoregressive_data(
     # Create the input features
 
     X = [np.random.normal(X_m, X_v, (seq_len, n_features)) for k in range(n_samples)]
-    w = np.array([memory_factor**k for k in range(seq_len)])
+    w = np.array([memory_factor ** k for k in range(seq_len)])
 
     if mode == "noise-sweep":
 

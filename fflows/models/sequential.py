@@ -7,31 +7,15 @@ This script contains torch implementation for a vanilla RNN
 
 """
 
-from __future__ import absolute_import, division, print_function
-
 import sys
 
 import numpy as np
-
-if not sys.warnoptions:
-    import warnings
-
-    warnings.simplefilter("ignore")
-
-import sys
-import warnings
-
 import torch
 from torch import nn
 from torch.autograd import Variable
 
+import fflows.logger as log
 from fflows.utils.data_padding import padd_arrays, unpadd_arrays
-
-warnings.filterwarnings("ignore")
-
-if not sys.warnoptions:
-    warnings.simplefilter("ignore")
-
 
 torch.manual_seed(1)
 
@@ -242,7 +226,7 @@ class RNNmodel(nn.Module):
 
                 if (step % 50 == 0) and verbosity:
 
-                    print("Epoch: ", epoch, f"| train loss: {self.loss.data:.4f}")
+                    log.debug(f"Epoch: {epoch}| train loss: {self.loss.data:.4f}")
 
     def predict(self, X, padd=False, numpy_output=False):
 

@@ -6,22 +6,17 @@
 This script contains the implementation for the spectral filter module of the Fourier flow
 
 """
-from __future__ import absolute_import, division, print_function
-
 import sys
 import warnings
 
 import numpy as np
 import torch
 import torch.nn as nn
-from fflows.filters.spectral import AttentionFilter, SpectralFilter
-from fflows.fourier.transforms import DFT
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-warnings.filterwarnings("ignore")
-
-if not sys.warnoptions:
-    warnings.simplefilter("ignore")
+import fflows.logger as log
+from fflows.filters.spectral import AttentionFilter, SpectralFilter
+from fflows.fourier.transforms import DFT
 
 
 class FourierFlow(nn.Module):
@@ -130,11 +125,10 @@ class FourierFlow(nn.Module):
                 progress_signs = current_epochs * "|" + remaining_epochs * "-"
                 display_string = "step: %d \t/ %d \t" + progress_signs + "\tloss: %.3f"
 
-                print(display_string % (step, epochs, loss))
+                log.debug(display_string % (step, epochs, loss))
 
             if step == epochs - 1:
-
-                print("Finished training!")
+                log.debug("Finished training!")
 
         return losses
 
@@ -255,11 +249,11 @@ class RealNVP(nn.Module):
                 progress_signs = current_epochs * "|" + remaining_epochs * "-"
                 display_string = "step: %d \t/ %d \t" + progress_signs + "\tloss: %.3f"
 
-                print(display_string % (step, epochs, loss))
+                log.debug(display_string % (step, epochs, loss))
 
             if step == epochs - 1:
 
-                print("Finished training!")
+                log.debug("Finished training!")
 
         return losses
 
@@ -380,11 +374,11 @@ class TimeFlow(nn.Module):
                 progress_signs = current_epochs * "|" + remaining_epochs * "-"
                 display_string = "step: %d \t/ %d \t" + progress_signs + "\tloss: %.3f"
 
-                print(display_string % (step, epochs, loss))
+                log.debug(display_string % (step, epochs, loss))
 
             if step == epochs - 1:
 
-                print("Finished training!")
+                log.debug("Finished training!")
 
         return losses
 
