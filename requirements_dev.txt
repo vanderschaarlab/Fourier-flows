@@ -1,0 +1,12 @@
+-r ./requirements.txt
+
+bandit
+black
+flake8
+pre-commit
+pytest
+jupyterlab
+matplotlib
+notebook
+tensorflow==1.15.5
+seaborn
