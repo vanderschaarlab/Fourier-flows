@@ -9,4 +9,4 @@ notebook
 pre-commit
 pytest
 seaborn
-tensorflow==1.15.5
+tensorflow
