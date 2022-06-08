@@ -20,34 +20,19 @@ from fflows.fourier.transforms import DFT
 
 
 class FourierFlow(nn.Module):
-    def __init__(self, hidden, fft_size, n_flows, FFT=True, flip=True, normalize=False):
+    def __init__(self, hidden, n_flows, FFT=True, flip=True, normalize=False):
 
         super().__init__()
 
-        self.d = fft_size
-        self.k = int(fft_size / 2) + 1
-        self.fft_size = fft_size
         self.FFT = FFT
         self.normalize = normalize
+        self.n_flows =n_flows
+        self.hidden = hidden
 
         if flip:
-
             self.flips = [True if i % 2 else False for i in range(n_flows)]
-
         else:
-
             self.flips = [False for i in range(n_flows)]
-
-        self.bijectors = nn.ModuleList(
-            [
-                SpectralFilter(
-                    self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]
-                )
-                for _ in range(n_flows)
-            ]
-        )
-
-        self.FourierTransform = DFT(N_fft=self.fft_size)
 
     def forward(self, x):
 
@@ -55,7 +40,7 @@ class FourierFlow(nn.Module):
             x = self.FourierTransform(x)[0]
 
             if self.normalize:
-                x = (x - self.fft_mean) / self.fft_std
+                x = (x - self.fft_mean) / (self.fft_std + 1e-8)
 
             x = x.view(-1, self.d + 1)
 
@@ -87,17 +72,31 @@ class FourierFlow(nn.Module):
         return z.detach().numpy()
 
     def fit(self, X, epochs=500, batch_size=128, learning_rate=1e-3, display_step=100):
-
         X_train = torch.from_numpy(np.array(X)).float()
+
+        self.individual_shape = X_train.shape[1:]
+
+        self.d = np.prod(self.individual_shape)
+        self.k = int(np.floor(self.d / 2))
+
+        # Prepare models
+        self.bijectors = nn.ModuleList(
+            [
+                SpectralFilter(
+                    self.d, self.k, self.FFT, hidden=self.hidden, flip=self.flips[_]
+                )
+                for _ in range(self.n_flows)
+            ]
+        )
+
+        self.FourierTransform = DFT(N_fft=self.d)
+
+        X_train = X_train.reshape(-1, self.d)
 
         # for normalizing the spectral transforms
         X_train_spectral = self.FourierTransform(X_train)[0]
         self.fft_mean = torch.mean(X_train_spectral, dim=0)
         self.fft_std = torch.std(X_train_spectral, dim=0)
-
-        self.d = X_train.shape[1]
-        self.k = int(np.floor(X_train.shape[1] / 2))
-
         optim = torch.optim.Adam(self.parameters(), lr=learning_rate)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, 0.999)
 
@@ -147,35 +146,23 @@ class FourierFlow(nn.Module):
 
         X_sample = self.inverse(z)
 
-        return X_sample
+        return X_sample.reshape(-1, *self.individual_shape)
 
 
 class RealNVP(nn.Module):
-    def __init__(self, hidden, T, n_flows, flip=True, normalize=False):
+    def __init__(self, hidden, n_flows, flip=True, normalize=False):
 
         super().__init__()
 
-        self.d = T
-        self.k = int(T / 2) + 1
         self.normalize = normalize
+        self.hidden = hidden
+        self.n_flows = n_flows
         self.FFT = False
 
         if flip:
-
             self.flips = [True if i % 2 else False for i in range(n_flows)]
-
         else:
-
             self.flips = [False for i in range(n_flows)]
-
-        self.bijectors = nn.ModuleList(
-            [
-                SpectralFilter(
-                    self.d, self.k, self.FFT, hidden=hidden, flip=self.flips[_]
-                )
-                for _ in range(n_flows)
-            ]
-        )
 
     def forward(self, x):
 
@@ -184,7 +171,7 @@ class RealNVP(nn.Module):
             x = self.FourierTransform(x)[0]
 
             if self.normalize:
-                x = (x - self.fft_mean) / self.fft_std
+                x = (x - self.fft_mean) / (self.fft_std + 1e-8)
 
             x = x.view(-1, self.d + 1)
 
@@ -216,11 +203,22 @@ class RealNVP(nn.Module):
         return z.detach().numpy()
 
     def fit(self, X, epochs=500, batch_size=128, learning_rate=1e-3, display_step=100):
-
         X_train = torch.from_numpy(np.array(X)).float()
 
-        self.d = X_train.shape[1]
-        self.k = int(np.floor(X_train.shape[1] / 2))
+        self.individual_shape = X_train.shape[1:]
+        self.d = np.prod(self.individual_shape)
+        self.k = int(np.floor(self.d / 2))
+
+        self.bijectors = nn.ModuleList(
+            [
+                SpectralFilter(
+                    self.d, self.k, self.FFT, hidden=self.hidden, flip=self.flips[_]
+                )
+                for _ in range(self.n_flows)
+            ]
+        )
+
+        X_train = X_train.reshape(-1, self.d)
 
         optim = torch.optim.Adam(self.parameters(), lr=learning_rate)
         scheduler = torch.optim.lr_scheduler.ExponentialLR(optim, 0.999)
@@ -272,7 +270,7 @@ class RealNVP(nn.Module):
 
         X_sample = self.inverse(z)
 
-        return X_sample
+        return X_sample.reshape(-1, *self.individual_shape)
 
 
 class TimeFlow(nn.Module):
