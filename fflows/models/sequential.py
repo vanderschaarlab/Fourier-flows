@@ -93,9 +93,7 @@ class RNN(nn.Module):
             r_out, h_n = self.rnn(x.reshape((-1, x.shape[1], 1)), None)
 
         # choose r_out at the last time step
-        out = self.out(r_out[:, -1, :])
-
-        return out.view(-1, x.shape[1])  # .transpose(2, 1)
+        return self.out(r_out[:, -1, :])
 
 
 class RNNmodel(nn.Module):
